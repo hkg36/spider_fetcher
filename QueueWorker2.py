@@ -13,7 +13,7 @@ class QueueWorker(object):
         self.psw=psw
         self.queue_name=queue_name
         self.msg_timeout=msg_timeout
-        self.task_count=1000
+        self.task_count=10000
     def run(self):
         connection = Connection(hostname=self.host,port=self.port,userid=self.usr,password=self.psw,virtual_host=self.virtual_host)
         channel = connection.channel()
@@ -30,6 +30,7 @@ class QueueWorker(object):
         consumer.consume()
         while self.task_count:
             connection.drain_events()
+            self.task_count-=1
         connection.close()
 
     def RequestCallBack(self,body, message):
@@ -58,7 +59,6 @@ class QueueWorker(object):
                                       routing_key=properties['reply_to'],
                                       correlation_id=properties.get('correlation_id'),
                                       compression='gzip')
-        self.task_count-=1
         message.ack()
     def RequestWork(self,params,body):
         print json.dumps(params)

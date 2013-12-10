@@ -7,20 +7,21 @@ import urlparse
 import httplib
 import gzip
 from weibo_tools.weibo_autoreg import parseHeaders
-
 InterfaceIP=None
-
+USE_PYCURL=True
 def UseRandomLocalAddress():
+    from netifaces import interfaces, ifaddresses, AF_INET
     global InterfaceIP
-    names,aliases,ips = socket.gethostbyname_ex(socket.gethostname())
-    print ips
     to_use_ip=set()
-    for ip in ips :
-        if not re.match('^(192.)|(10.)|(127.)',ip):
-            to_use_ip.add(ip)
-            print 'use ip:',ip
+    for ifaceName in interfaces():
+        addresses = [i['addr'] for i in ifaddresses(ifaceName).setdefault(AF_INET, [{'addr':None}] )]
+        for ip in addresses:
+            if ip and not re.match('^(192.)|(10.)|(127.)',ip):
+                to_use_ip.add(ip)
+                print 'use ip:',ip
     InterfaceIP=list(to_use_ip)
 
+crl = pycurl.Curl()
 def getHttpBody(url,ref=None,content_type=None,body=None,cookie=None):
     source_addr=None
     if InterfaceIP is not None:
@@ -28,6 +29,7 @@ def getHttpBody(url,ref=None,content_type=None,body=None,cookie=None):
             source_addr=InterfaceIP[random.randint(0,len(InterfaceIP)-1)]
         elif (isinstance(InterfaceIP,str) or isinstance(InterfaceIP,unicode)) and len(InterfaceIP)>0:
             source_addr=InterfaceIP
+    """
     urlpart=urlparse.urlparse(url)
     headers={'User-Agent':'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0',
              'Accept-Encoding':'gzip',
@@ -38,8 +40,9 @@ def getHttpBody(url,ref=None,content_type=None,body=None,cookie=None):
         headers["Cookie"]=cookie
     if ref is not None:
         headers["Referer"]=ref
+    """
 
-    """crl = pycurl.Curl()
+    global crl
     crl.setopt(pycurl.FOLLOWLOCATION, 0)
     crl.setopt(pycurl.MAXREDIRS, 5)
     crl.setopt(pycurl.USERAGENT,'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0')
@@ -57,6 +60,9 @@ def getHttpBody(url,ref=None,content_type=None,body=None,cookie=None):
     crl.setopt(pycurl.HTTPHEADER, headers)
     if body:
         crl.setopt(crl.POSTFIELDS,body)
+        crl.setopt(crl.POST, 1)
+    else:
+        crl.setopt(crl.POST, 0)
     
     if source_addr is not None:
         crl.setopt(pycurl.INTERFACE,source_addr)
@@ -70,8 +76,9 @@ def getHttpBody(url,ref=None,content_type=None,body=None,cookie=None):
     crl.perform()
 
     res=crl.getinfo(pycurl.HTTP_CODE),crl.fp.getvalue(),parseHeaders(crl.hp)
-    crl.close()"""
-    if urlpart.scheme=="https":
+    #crl.close()
+    return res
+    """if urlpart.scheme=="https":
         conn = httplib.HTTPSConnection(urlpart.netloc,source_address=(source_addr,0) if source_addr is not None else None ,timeout=20)
     else:
         conn = httplib.HTTPConnection(urlpart.netloc,source_address=(source_addr,0) if source_addr is not None else None ,timeout=20)
@@ -82,7 +89,7 @@ def getHttpBody(url,ref=None,content_type=None,body=None,cookie=None):
     if res.getheader('Content-Encoding')=='gzip':
         res_body=gzip.GzipFile(mode='rb',fileobj=StringIO(res_body)).read()
     result=(res.status,res_body,res.msg.dict)
-    return result
+    return result"""
 
 if __name__ == '__main__':
     print getHttpBody('https://www.google.com.hk/search?q=%E6%B2%99%E5%A1%94%E6%96%AF+%E9%94%BB%E7%82%89&ie=utf-8&oe=utf-8&aq=t&rls=org.mozilla:zh-CN:official&client=firefox-a',

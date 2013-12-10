@@ -3,6 +3,7 @@ import os
 import json
 import random
 
+weibo_tools.UseRandomLocalAddress()
 os.remove('data/weibo_oauths.db')
 client=weibo_tools.DefaultWeiboClient()
 fun=getattr(client,u'statuses__public_timeline')

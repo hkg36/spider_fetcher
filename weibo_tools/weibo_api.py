@@ -20,14 +20,15 @@ InterfaceIP=None
 USE_PYCURL=True
 token_error=set((21314,21315,21316,21317,21319,21327))
 def UseRandomLocalAddress():
+    from netifaces import interfaces, ifaddresses, AF_INET
     global InterfaceIP
-    names,aliases,ips = socket.gethostbyname_ex(socket.gethostname())
-    print ips
     to_use_ip=set()
-    for ip in ips :
-        if not re.match('^(192.)|(10.)|(127.)',ip):
-            to_use_ip.add(ip)
-            print 'use ip:',ip
+    for ifaceName in interfaces():
+        addresses = [i['addr'] for i in ifaddresses(ifaceName).setdefault(AF_INET, [{'addr':None}] )]
+        for ip in addresses:
+            if ip and not re.match('^(192.)|(10.)|(127.)',ip):
+                to_use_ip.add(ip)
+                print 'use ip:',ip
     InterfaceIP=list(to_use_ip)
 
 class APIError(StandardError):
@@ -111,7 +112,6 @@ class WeiboRequestFail(Exception):
             self.error_data={}
     def __str__(self):
         return '%d %s'%(self.httpcode,self.msg)
-
 crl = pycurl.Curl()
 def _http_call(url, method, authorization, **kw):
     '''
@@ -166,6 +166,8 @@ def _http_call(url, method, authorization, **kw):
         if http_body is not None:
             crl.setopt(crl.POST, 1)
             crl.setopt(crl.POSTFIELDS,  http_body)
+        else:
+            crl.setopt(crl.POST, 0)
         crl.setopt(pycurl.CONNECTTIMEOUT, 6)
         crl.setopt(pycurl.TIMEOUT, 15)
         crl.fp = StringIO()
