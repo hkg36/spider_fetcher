@@ -38,6 +38,9 @@ class WeiboQueueWork(QueueWorker2.QueueWorker):
                 if e.httpcode in {503,502}:
                     print 'error 1 retry'
                     continue
+                if e.httpcode in {403} and e.error_data.get('error_code')==10022:
+                    time.sleep(10)
+                    continue
                 return {'error':1,'httpcode':e.httpcode,'weiboerror':e.error_data.get('error_code',0)},str(e)
             except weibo_tools.APIError,e:
                 if e.error_code==10022:

@@ -56,59 +56,58 @@ def GetWeiboOauth(APP_KEY,APP_SECRET,CALLBACK_URL,user_name,user_psw):
         }
     reqstring=urllib.urlencode(reqdata)
 
-    """
-    crl = pycurl.Curl()
-    crl.setopt(pycurl.FOLLOWLOCATION, 0)
-    crl.setopt(pycurl.MAXREDIRS, 5)
-    crl.setopt(pycurl.ENCODING,"gzip,deflate")
-    crl.setopt(pycurl.HTTPHEADER, ["User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64; rv:13.0) Gecko/20100101 Firefox/21.0.1)",
-                                    "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-                                    "Accept-Language: zh-cn,en-us;q=0.7,en;q=0.3",
-                                    "Content-Type: application/x-www-form-urlencoded"])
-    crl.setopt(pycurl.REFERER,url_1)
-    crl.setopt(crl.POST, 1)
-    crl.setopt(crl.POSTFIELDS,  reqstring)
-    crl.setopt(pycurl.CONNECTTIMEOUT, 6)
-    crl.setopt(pycurl.TIMEOUT, 15)
-    crl.fp = StringIO()
-    crl.hp=StringIO()
-    crl.setopt(pycurl.URL, url)
-    crl.setopt(crl.WRITEFUNCTION, crl.fp.write)
-    crl.setopt(crl.HEADERFUNCTION,crl.hp.write)
-    crl.perform()
-    res_code=crl.getinfo(pycurl.HTTP_CODE)
-    res_body=crl.fp.getvalue()
+    if weibo_api.USE_PYCURL:
+        crl =weibo_api.crl
+        crl.setopt(pycurl.FOLLOWLOCATION, 0)
+        crl.setopt(pycurl.MAXREDIRS, 5)
+        crl.setopt(pycurl.ENCODING,"gzip,deflate")
+        crl.setopt(pycurl.HTTPHEADER, ["User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64; rv:13.0) Gecko/20100101 Firefox/21.0.1)",
+                                        "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                                        "Accept-Language: zh-cn,en-us;q=0.7,en;q=0.3",
+                                        "Content-Type: application/x-www-form-urlencoded"])
+        crl.setopt(pycurl.REFERER,url_1)
+        crl.setopt(crl.POST, 1)
+        crl.setopt(crl.POSTFIELDS,  reqstring)
+        crl.setopt(pycurl.CONNECTTIMEOUT, 6)
+        crl.setopt(pycurl.TIMEOUT, 15)
+        crl.fp = StringIO()
+        crl.hp=StringIO()
+        crl.setopt(pycurl.URL, url)
+        crl.setopt(crl.WRITEFUNCTION, crl.fp.write)
+        crl.setopt(crl.HEADERFUNCTION,crl.hp.write)
+        crl.perform()
+        res_code=crl.getinfo(pycurl.HTTP_CODE)
+        res_body=crl.fp.getvalue()
 
-    if res_code==302:
-        headers=parseHeaders(crl.hp)
-        new_location=headers.get('location')
-        if new_location:
-            re_res = re.search('\?code=(?P<code>\w*)', new_location, re.IGNORECASE)
-            if re_res != None:
-                oauth_code = re_res.group('code')
-    crl.close()
-    """
-    conn = httplib.HTTPSConnection("api.weibo.com",httplib.HTTPS_PORT,timeout=20)
-    conn.request('POST', '/oauth2/authorize', headers = {"Host": "api.weibo.com",
-                                    'Referer':url_1,
-                                    "User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:13.0) Gecko/20100101 Firefox/21.0.1)",
-                                    "Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-                                    "Accept-Language":"zh-cn,en-us;q=0.7,en;q=0.3",
-                                    "Content-Type":"application/x-www-form-urlencoded",
-                                    "Accept-Encoding":"gzip"}
-                ,body=reqstring)
-    res = conn.getresponse()
-    resbody=res.read()
-    if res.getheader('Content-Encoding')=='gzip':
-        resbody=gzip.GzipFile(mode='rb',fileobj=StringIO(resbody)).read()
+        if res_code==302:
+            headers=parseHeaders(crl.hp)
+            new_location=headers.get('location')
+            if new_location:
+                re_res = re.search('\?code=(?P<code>\w*)', new_location, re.IGNORECASE)
+                if re_res != None:
+                    oauth_code = re_res.group('code')
+    else:
+        conn = httplib.HTTPSConnection("api.weibo.com",httplib.HTTPS_PORT,timeout=20)
+        conn.request('POST', '/oauth2/authorize', headers = {"Host": "api.weibo.com",
+                                        'Referer':url_1,
+                                        "User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:13.0) Gecko/20100101 Firefox/21.0.1)",
+                                        "Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                                        "Accept-Language":"zh-cn,en-us;q=0.7,en;q=0.3",
+                                        "Content-Type":"application/x-www-form-urlencoded",
+                                        "Accept-Encoding":"gzip"}
+                    ,body=reqstring)
+        res = conn.getresponse()
+        resbody=res.read()
+        if res.getheader('Content-Encoding')=='gzip':
+            resbody=gzip.GzipFile(mode='rb',fileobj=StringIO(resbody)).read()
 
-    oauth_code=None
-    if res.status==302:
-        new_location=res.getheader('location')
-        if new_location:
-            re_res = re.search('\?code=(?P<code>\w*)', new_location, re.IGNORECASE)
-            if re_res != None:
-                oauth_code = re_res.group('code')
+        oauth_code=None
+        if res.status==302:
+            new_location=res.getheader('location')
+            if new_location:
+                re_res = re.search('\?code=(?P<code>\w*)', new_location, re.IGNORECASE)
+                if re_res != None:
+                    oauth_code = re_res.group('code')
 
     if oauth_code!=None:
         client = weibo_api.APIClient(app_key=APP_KEY, app_secret=APP_SECRET,redirect_uri=CALLBACK_URL)

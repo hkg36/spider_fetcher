@@ -4,7 +4,10 @@ import json
 import random
 
 weibo_tools.UseRandomLocalAddress()
-os.remove('data/weibo_oauths.db')
+try:
+    os.remove('data/weibo_oauths.db')
+except Exception,e:
+    print(e)
 client=weibo_tools.DefaultWeiboClient()
 fun=getattr(client,u'statuses__public_timeline')
 res=fun()
