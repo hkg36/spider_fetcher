@@ -18,7 +18,7 @@ import gzip
 from cStringIO import StringIO
 InterfaceIP=None
 USE_PYCURL=True
-token_error=set((21314,21315,21316,21317,21319,21327))
+token_error={21314,21315,21316,21317,21319,21327}
 def UseRandomLocalAddress():
     from netifaces import interfaces, ifaddresses, AF_INET
     global InterfaceIP
@@ -112,7 +112,7 @@ class WeiboRequestFail(Exception):
             self.error_data={}
     def __str__(self):
         return '%d %s'%(self.httpcode,self.msg)
-crl = pycurl.Curl()
+crl = pycurl.Curl() if USE_PYCURL else None
 def _http_call(url, method, authorization, **kw):
     '''
     send an http request and expect to return a json object if no error.

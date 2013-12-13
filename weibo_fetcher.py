@@ -6,6 +6,7 @@ from cStringIO import StringIO
 import time
 import QueueWorker2
 import config
+import os
 
 class WeiboQueueWork(QueueWorker2.QueueWorker):
     def RequestWork(self,params,body):
@@ -39,13 +40,21 @@ class WeiboQueueWork(QueueWorker2.QueueWorker):
                     print 'error 1 retry'
                     continue
                 if e.httpcode in {403} and e.error_data.get('error_code')==10022:
-                    time.sleep(10)
+                    time.sleep(30)
                     continue
                 return {'error':1,'httpcode':e.httpcode,'weiboerror':e.error_data.get('error_code',0)},str(e)
             except weibo_tools.APIError,e:
                 if e.error_code==10022:
                     print 'error 2'
                     return {'error':2,'api_error':e.error_code},str(e)
+                if e.isOauthFail():
+                    if ACCESS_TOKEN:
+                        return {'error':4},'oauth fail'
+                    else:
+                        try:
+                            os.remove('data/weibo_oauths.db')
+                        except Exception,e:
+                            print e
                 print 'error 2 retry'
                 continue
             except Exception,e:
