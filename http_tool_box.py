@@ -21,7 +21,6 @@ def UseRandomLocalAddress():
                 print 'use ip:',ip
     InterfaceIP=list(to_use_ip)
 
-crl = pycurl.Curl()
 def getHttpBody(url,ref=None,content_type=None,body=None,cookie=None):
     source_addr=None
     if InterfaceIP is not None:
@@ -42,7 +41,7 @@ def getHttpBody(url,ref=None,content_type=None,body=None,cookie=None):
         headers["Referer"]=ref
     """
 
-    global crl
+    crl = pycurl.Curl()
     crl.setopt(pycurl.FOLLOWLOCATION, 0)
     crl.setopt(pycurl.MAXREDIRS, 5)
     crl.setopt(pycurl.USERAGENT,'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0')

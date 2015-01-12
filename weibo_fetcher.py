@@ -7,7 +7,9 @@ import time
 import QueueWorker2
 import config
 import os
+import weibo_tools
 
+weibo_tools.USE_PYCURL=False
 class WeiboQueueWork(QueueWorker2.QueueWorker):
     def RequestWork(self,params,body):
         APP_KEY=params.get('app_key','2824743419')
